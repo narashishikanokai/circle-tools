@@ -2,180 +2,39 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>数字トレーニング（スマホ版・音声なし）</title>
+<title>数字トレーニング</title>
 <style>
   body {
     font-family: sans-serif;
     padding: 20px;
     max-width: 500px;
     margin: auto;
-  }
-  h2 {
     text-align: center;
   }
-  .big-output {
-    font-size: 36px;
-    text-align: center;
-    margin: 30px 0;
-    min-height: 40px;
+  h1 {
+    margin-bottom: 30px;
   }
-  button {
-    width: 100%;
+  a {
+    display: block;
     padding: 15px;
-    margin: 8px 0;
-    font-size: 18px;
+    margin: 12px 0;
+    font-size: 20px;
+    text-decoration: none;
+    background: #0078d7;
+    color: white;
+    border-radius: 8px;
   }
-  select, input[type=number] {
-    width: 100%;
-    padding: 10px;
-    margin: 8px 0;
-    font-size: 18px;
+  a:hover {
+    background: #005fa3;
   }
 </style>
 </head>
 <body>
 
-<h2>数字トレーニング（スマホ版・音声なし）</h2>
+<h1>数字トレーニング</h1>
 
-<label>モード：</label>
-<select id="modeSelect">
-  <option value="number">数字＋単位</option>
-  <option value="date">年月日（曜日つき）</option>
-  <option value="time">時刻（12時間制）</option>
-  <option value="random">ランダム</option>
-</select>
-
-<label>桁数（数字モードのみ）：</label>
-<select id="digitSelect">
-  <option value="1">1桁</option>
-  <option value="2">2桁</option>
-  <option value="3">3桁</option>
-  <option value="4">4桁</option>
-  <option value="5">5桁</option>
-  <option value="6">6桁</option>
-  <option value="7">7桁</option>
-  <option value="8">8桁</option>
-  <option value="9">9桁</option>
-</select>
-
-<label>表示間隔（ミリ秒）：</label>
-<input id="intervalInput" type="number" value="1200">
-
-<label>タイマー（分）：</label>
-<input id="timerMinutes" type="number" value="5">
-
-<button onclick="start()">開始</button>
-<button onclick="stop()">停止</button>
-
-<div class="big-output" id="lastOutput">-</div>
-<p>残り時間：<span id="timeLeft">-</span></p>
-
-<script>
-let running = false;
-let countdownTimer = null;
-let nextTimer = null;
-
-// 名詞リスト
-const nouns = [
-  "歳","円","時間","％","年",
-  "ミリメートル","センチメートル","メートル","キロメートル",
-  "ミリグラム","グラム","キログラム","トン",
-  "か月",
-  "平方センチメートル","平方メートル",
-  "立方センチメートル","立方メートル",
-  "リットル"
-];
-
-const weekdayNames = ["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"];
-
-function getRandomNumber(digits) {
-  const min = Math.pow(10, digits - 1);
-  const max = Math.pow(10, digits) - 1;
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function getRandomNoun() {
-  return nouns[Math.floor(Math.random() * nouns.length)];
-}
-
-function getRandomYMD() {
-  const year = Math.floor(Math.random() * 31) + 1995;
-  const month = Math.floor(Math.random() * 12) + 1;
-
-  let maxDay = 31;
-  if ([4, 6, 9, 11].includes(month)) maxDay = 30;
-  if (month === 2) maxDay = 28;
-
-  const day = Math.floor(Math.random() * maxDay) + 1;
-
-  const d = new Date(year, month - 1, day);
-  const weekday = weekdayNames[d.getDay()];
-
-  return `${year}年${month}月${day}日（${weekday}）`;
-}
-
-function getRandomTime() {
-  const hour = Math.floor(Math.random() * 12) + 1;
-  const minute = Math.floor(Math.random() * 60);
-  const ampm = Math.random() < 0.5 ? "午前" : "午後";
-  return `${ampm}${hour}時${minute}分`;
-}
-
-function getRandomMixed(digits) {
-  const modes = ["number", "date", "time"];
-  const pick = modes[Math.floor(Math.random() * modes.length)];
-
-  if (pick === "number") return getRandomNumber(digits) + getRandomNoun();
-  if (pick === "date") return getRandomYMD();
-  return getRandomTime();
-}
-
-function showNext() {
-  if (!running) return;
-
-  const mode = document.getElementById("modeSelect").value;
-  const digits = Number(document.getElementById("digitSelect").value);
-  const interval = Number(document.getElementById("intervalInput").value);
-
-  let output = "";
-  if (mode === "number") output = getRandomNumber(digits) + getRandomNoun();
-  else if (mode === "date") output = getRandomYMD();
-  else if (mode === "time") output = getRandomTime();
-  else output = getRandomMixed(digits);
-
-  document.getElementById("lastOutput").textContent = output;
-
-  nextTimer = setTimeout(showNext, interval);
-}
-
-function start() {
-  stop();
-  running = true;
-
-  let timeLeft = Number(document.getElementById("timerMinutes").value) * 60;
-  document.getElementById("timeLeft").textContent = timeLeft + "秒";
-
-  countdownTimer = setInterval(() => {
-    timeLeft--;
-    document.getElementById("timeLeft").textContent = timeLeft + "秒";
-    if (timeLeft <= 0) stop();
-  }, 1000);
-
-  showNext();
-}
-
-function stop() {
-  running = false;
-
-  if (countdownTimer) clearInterval(countdownTimer);
-  countdownTimer = null;
-
-  if (nextTimer) clearTimeout(nextTimer);
-  nextTimer = null;
-
-  document.getElementById("timeLeft").textContent = "-";
-}
-</script>
+<a href="number-training-pc.html">PC版（音声あり）</a>
+<a href="number-training-mobile.html">スマホ版（音声なし）</a>
 
 </body>
 </html>
