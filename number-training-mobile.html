@@ -120,7 +120,7 @@ function getRandomMixed(digits) {
   return getRandomTime();
 }
 
-// ★ スマホ対応：イベント駆動で次を読む
+// ★ スマホ対応：次の読み上げ
 function speakNext() {
   if (!running) return;
 
@@ -150,9 +150,15 @@ function start() {
   stop();
   running = true;
 
-  // ★ スマホ用：開始直後に空読み上げで音声許可を取る
-  const unlock = new SpeechSynthesisUtterance(" ");
+  // ★ スマホ用：最初に短い音声でエンジンを起動
+  const unlock = new SpeechSynthesisUtterance("テスト");
   unlock.lang = "ja-JP";
+
+  unlock.onend = () => {
+    // unlock が終わってから本番開始
+    speakNext();
+  };
+
   speechSynthesis.speak(unlock);
 
   let timeLeft = Number(document.getElementById("timerMinutes").value) * 60;
@@ -163,9 +169,6 @@ function start() {
     document.getElementById("timeLeft").textContent = timeLeft + "秒";
     if (timeLeft <= 0) stop();
   }, 1000);
-
-  // ★ Android Chrome 対策：ユーザー操作内で最初の speak を呼ぶ
-  speakNext();
 }
 
 function stop() {
