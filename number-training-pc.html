@@ -1,106 +1,83 @@
+ChatGPTに作ってもらったらスマホでも音声出たよ
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>数字トレーニング（改良版）</title>
-
+<title>数字トレーニング（スマホ版・音声なし）</title>
 <style>
-body{
-  font-family: sans-serif;
-  font-size: 1.1rem;
-  line-height: 1.8;
-  margin: 20px;
-}
-
-button{
-  font-size: 1rem;
-  padding: 10px;
-  margin: 4px;
-  cursor: pointer;
-}
-
-input{
-  font-size: 1rem;
-  padding: 5px;
-  width: 80px;
-}
-
-.panel{
-  margin-bottom: 20px;
-}
-
-.status{
-  font-weight: bold;
-  color: darkblue;
-}
+  body {
+    font-family: sans-serif;
+    padding: 20px;
+    max-width: 500px;
+    margin: auto;
+  }
+  h2 {
+    text-align: center;
+  }
+  .big-output {
+    font-size: 36px;
+    text-align: center;
+    margin: 30px 0;
+    min-height: 40px;
+  }
+  button {
+    width: 100%;
+    padding: 15px;
+    margin: 8px 0;
+    font-size: 18px;
+  }
+  select, input[type=number] {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    font-size: 18px;
+  }
 </style>
 </head>
-
 <body>
 
-<h2>数字トレーニング（改良版）</h2>
+<h2>数字トレーニング（スマホ版・音声なし）</h2>
 
-<div class="panel">
-  モード：
-  <button onclick="setMode('number')">数字＋単位</button>
-  <button onclick="setMode('date')">年月日</button>
-  <button onclick="setMode('time')">時刻</button>
-  <button onclick="setMode('random')">ランダム</button>
-</div>
+<label>モード：</label>
+<select id="modeSelect">
+  <option value="number">数字＋単位</option>
+  <option value="date">年月日（曜日つき）</option>
+  <option value="time">時刻（12時間制）</option>
+  <option value="random">ランダム</option>
+</select>
 
-<div class="panel" id="digitArea">
-  桁数：
-  <button onclick="setDigits(1)">1桁</button>
-  <button onclick="setDigits(2)">2桁</button>
-  <button onclick="setDigits(3)">3桁</button>
-  <button onclick="setDigits(4)">4桁</button>
-  <button onclick="setDigits(5)">5桁</button>
-  <button onclick="setDigits(6)">6桁</button>
-  <button onclick="setDigits(7)">7桁</button>
-  <button onclick="setDigits(8)">8桁</button>
-  <button onclick="setDigits(9)">9桁</button>
-</div>
+<label>桁数（数字モードのみ）：</label>
+<select id="digitSelect">
+  <option value="1">1桁</option>
+  <option value="2">2桁</option>
+  <option value="3">3桁</option>
+  <option value="4">4桁</option>
+  <option value="5">5桁</option>
+  <option value="6">6桁</option>
+  <option value="7">7桁</option>
+  <option value="8">8桁</option>
+  <option value="9">9桁</option>
+</select>
 
-<div class="panel">
-  読み上げ間隔（ms）：
-  <input id="intervalInput" type="number" value="1200">
-</div>
+<label>表示間隔（ミリ秒）：</label>
+<input id="intervalInput" type="number" value="5000">
 
-<div class="panel">
-  読み上げ速度：
-  <input id="rateInput" type="number" value="1" step="0.1" min="0.5" max="2">
-</div>
+<label>タイマー（分）：</label>
+<input id="timerMinutes" type="number" value="5">
 
-<div class="panel">
-  タイマー（分）：
-  <input id="timerMinutes" type="number" value="5">
-</div>
+<button onclick="start()">開始</button>
+<button onclick="stop()">停止</button>
 
-<div class="panel">
-  <button onclick="start()">開始</button>
-  <button onclick="stop()">停止</button>
-  <button onclick="repeatLast()">もう一回</button>
-</div>
-
-<hr>
-
-<p>現在のモード：<span id="modeLabel">数字＋単位</span></p>
-<p>現在の桁数：<span id="digitsLabel">1</span>桁</p>
-<p>状態：<span id="status" class="status">停止中</span></p>
-<p>直近の出力：<span id="lastOutput">-</span></p>
+<div class="big-output" id="lastOutput">-</div>
 <p>残り時間：<span id="timeLeft">-</span></p>
 
 <script>
-
 let running = false;
-let digits = 1;
-let mode = "number";
 let countdownTimer = null;
-let lastText = "";
+let nextTimer = null;
 
-// 名詞
+// 名詞リスト
 const nouns = [
   "歳","円","時間","％","年",
   "ミリメートル","センチメートル","メートル","キロメートル",
@@ -111,249 +88,95 @@ const nouns = [
   "リットル"
 ];
 
-// 曜日
-const weekdayNames = [
-  "日曜日","月曜日","火曜日",
-  "水曜日","木曜日","金曜日","土曜日"
-];
+const weekdayNames = ["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"];
 
-// モード変更
-function setMode(m){
-
-  mode = m;
-
-  if(m === "number"){
-    document.getElementById("modeLabel").textContent = "数字＋単位";
-    document.getElementById("digitArea").style.display = "block";
-  }
-  else if(m === "date"){
-    document.getElementById("modeLabel").textContent = "年月日";
-    document.getElementById("digitArea").style.display = "none";
-  }
-  else if(m === "time"){
-    document.getElementById("modeLabel").textContent = "時刻";
-    document.getElementById("digitArea").style.display = "none";
-  }
-  else{
-    document.getElementById("modeLabel").textContent = "ランダム";
-    document.getElementById("digitArea").style.display = "none";
-  }
-}
-
-// 桁数変更
-function setDigits(d){
-  digits = d;
-  document.getElementById("digitsLabel").textContent = d;
-}
-
-// ランダム数字
-function getRandomNumber(){
-
-  let min = 0;
-
-  if(digits > 1){
-    min = Math.pow(10, digits - 1);
-  }
-
+function getRandomNumber(digits) {
+  const min = Math.pow(10, digits - 1);
   const max = Math.pow(10, digits) - 1;
-
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// ランダム名詞
-function getRandomNoun(){
+function getRandomNoun() {
   return nouns[Math.floor(Math.random() * nouns.length)];
 }
 
-// ランダム年月日
-function getRandomYMD(){
-
+function getRandomYMD() {
   const year = Math.floor(Math.random() * 31) + 1995;
   const month = Math.floor(Math.random() * 12) + 1;
 
-  // 本物の日数取得（うるう年対応）
-  const maxDay = new Date(year, month, 0).getDate();
+  let maxDay = 31;
+  if ([4, 6, 9, 11].includes(month)) maxDay = 30;
+  if (month === 2) maxDay = 28;
 
   const day = Math.floor(Math.random() * maxDay) + 1;
 
   const d = new Date(year, month - 1, day);
-
   const weekday = weekdayNames[d.getDay()];
 
-  return `${year}年、${month}月${day}日、${weekday}`;
+  return `${year}年${month}月${day}日（${weekday}）`;
 }
 
-// ランダム時刻
-function getRandomTime(){
-
+function getRandomTime() {
   const hour = Math.floor(Math.random() * 12) + 1;
-
   const minute = Math.floor(Math.random() * 60);
-
   const ampm = Math.random() < 0.5 ? "午前" : "午後";
-
-  return `${ampm}、${hour}時、${minute}分`;
+  return `${ampm}${hour}時${minute}分`;
 }
 
-// ランダム混合
-function getRandomMixed(){
-
+function getRandomMixed(digits) {
   const modes = ["number", "date", "time"];
-
   const pick = modes[Math.floor(Math.random() * modes.length)];
 
-  if(pick === "number"){
-    return getRandomNumber() + getRandomNoun();
-  }
-
-  if(pick === "date"){
-    return getRandomYMD();
-  }
-
+  if (pick === "number") return getRandomNumber(digits) + getRandomNoun();
+  if (pick === "date") return getRandomYMD();
   return getRandomTime();
 }
 
-// 読み上げ
-function speakAndWait(text, interval){
+function showNext() {
+  if (!running) return;
 
-  return new Promise(resolve => {
+  const mode = document.getElementById("modeSelect").value;
+  const digits = Number(document.getElementById("digitSelect").value);
+  const interval = Number(document.getElementById("intervalInput").value);
 
-    const u = new SpeechSynthesisUtterance(text);
+  let output = "";
+  if (mode === "number") output = getRandomNumber(digits) + getRandomNoun();
+  else if (mode === "date") output = getRandomYMD();
+  else if (mode === "time") output = getRandomTime();
+  else output = getRandomMixed(digits);
 
-    u.lang = "ja-JP";
+  document.getElementById("lastOutput").textContent = output;
 
-    // 読み上げ速度
-    u.rate = Number(document.getElementById("rateInput").value) || 1;
-
-    u.onstart = () => {
-      document.getElementById("status").textContent = "読み上げ中";
-    };
-
-    u.onend = () => {
-
-      document.getElementById("status").textContent = "待機中";
-
-      setTimeout(resolve, interval);
-    };
-
-    speechSynthesis.speak(u);
-
-  });
+  nextTimer = setTimeout(showNext, interval);
 }
 
-// メインループ
-async function loop(){
-
-  const interval =
-    Number(document.getElementById("intervalInput").value) || 1200;
-
-  while(running){
-
-    if(!running) break;
-
-    let output = "";
-
-    if(mode === "number"){
-      output = getRandomNumber() + getRandomNoun();
-    }
-    else if(mode === "date"){
-      output = getRandomYMD();
-    }
-    else if(mode === "time"){
-      output = getRandomTime();
-    }
-    else{
-      output = getRandomMixed();
-    }
-
-    lastText = output;
-
-    document.getElementById("lastOutput").textContent = output;
-
-    await speakAndWait(output, interval);
-  }
-}
-
-// 開始
-function start(){
-
-  if(running) return;
-
-  // スマホ音声解除
-  const unlock = new SpeechSynthesisUtterance(" ");
-  unlock.lang = "ja-JP";
-  speechSynthesis.speak(unlock);
-
+function start() {
+  stop();
   running = true;
 
-  document.getElementById("status").textContent = "開始";
-
-  let timeLeft =
-    Number(document.getElementById("timerMinutes").value) * 60;
-
-  updateTimeDisplay(timeLeft);
+  let timeLeft = Number(document.getElementById("timerMinutes").value) * 60;
+  document.getElementById("timeLeft").textContent = timeLeft + "秒";
 
   countdownTimer = setInterval(() => {
-
     timeLeft--;
-
-    updateTimeDisplay(timeLeft);
-
-    if(timeLeft <= 0){
-      stop();
-    }
-
+    document.getElementById("timeLeft").textContent = timeLeft + "秒";
+    if (timeLeft <= 0) stop();
   }, 1000);
 
-  loop();
+  showNext();
 }
 
-// 停止
-function stop(){
-
+function stop() {
   running = false;
 
-  try{
-    speechSynthesis.cancel();
-  }
-  catch(e){}
-
-  if(countdownTimer){
-    clearInterval(countdownTimer);
-  }
-
+  if (countdownTimer) clearInterval(countdownTimer);
   countdownTimer = null;
 
-  document.getElementById("status").textContent = "停止中";
+  if (nextTimer) clearTimeout(nextTimer);
+  nextTimer = null;
 
   document.getElementById("timeLeft").textContent = "-";
 }
-
-// 残り時間表示
-function updateTimeDisplay(seconds){
-
-  const min = Math.floor(seconds / 60);
-
-  const sec = seconds % 60;
-
-  document.getElementById("timeLeft").textContent =
-    `${min}:${sec.toString().padStart(2, '0')}`;
-}
-
-// リピート
-function repeatLast(){
-
-  if(!lastText) return;
-
-  const u = new SpeechSynthesisUtterance(lastText);
-
-  u.lang = "ja-JP";
-
-  u.rate = Number(document.getElementById("rateInput").value) || 1;
-
-  speechSynthesis.speak(u);
-}
-
 </script>
 
 </body>
