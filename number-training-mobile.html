@@ -164,7 +164,7 @@ function start() {
     if (timeLeft <= 0) stop();
   }, 1000);
 
-  // 最初の読み上げ
+  // 最初の読み上げ（Android対策で少し長めに待つ）
   setTimeout(speakNext, 800);
 }
 
@@ -178,10 +178,13 @@ function stop() {
   if (nextTimer) clearTimeout(nextTimer);
   nextTimer = null;
 
-  document.getElementById("digitSlider").oninput = function() {
-  	document.getElementById("digitLabel").textContent = this.value;
-};
+  document.getElementById("timeLeft").textContent = "-";
+}
 
+// ★ 桁数スライダーのイベント（stop() の外）
+document.getElementById("digitSlider").oninput = function() {
+  document.getElementById("digitLabel").textContent = this.value;
+};
 </script>
 
 </body>
