@@ -165,7 +165,7 @@ function start() {
   }, 1000);
 
   // 最初の読み上げ
-  setTimeout(speakNext, 300);
+  setTimeout(speakNext, 800);
 }
 
 function stop() {
@@ -178,8 +178,10 @@ function stop() {
   if (nextTimer) clearTimeout(nextTimer);
   nextTimer = null;
 
-  document.getElementById("timeLeft").textContent = "-";
-}
+  document.getElementById("digitSlider").oninput = function() {
+  	document.getElementById("digitLabel").textContent = this.value;
+};
+
 </script>
 
 </body>
