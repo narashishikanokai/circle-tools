@@ -168,6 +168,23 @@ function start() {
   stop();
   running = true;
 
+  // ★ スマホ用：開始ボタン直後に空読み上げ（これが超重要）
+  const unlock = new SpeechSynthesisUtterance("");
+  unlock.lang = "ja-JP";
+  speechSynthesis.speak(unlock);
+
+  let timeLeft = Number(document.getElementById('timerMinutes').value) * 60;
+  document.getElementById('timeLeft').textContent = timeLeft + "秒";
+
+  countdownTimer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timeLeft').textContent = timeLeft + "秒";
+    if (timeLeft <= 0) stop();
+  }, 1000);
+
+  loop();
+}
+  
   let timeLeft = Number(document.getElementById('timerMinutes').value) * 60;
   document.getElementById('timeLeft').textContent = timeLeft + "秒";
 
