@@ -4,43 +4,99 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>数字トレーニング（PC版・音声あり）</title>
+<title>数字トレーニング（改良版・音声あり）</title>
 
 <style>
+
 body{
-  font-family: sans-serif;
-  font-size: 1.1rem;
-  line-height: 1.8;
-  margin: 20px;
+  font-family:sans-serif;
+  font-size:1.1rem;
+  line-height:1.8;
+  margin:20px;
+  background:#f7f7f7;
+}
+
+h2{
+  text-align:center;
 }
 
 button{
-  font-size: 1rem;
-  padding: 10px;
-  margin: 4px;
-  cursor: pointer;
+  font-size:1rem;
+  padding:12px;
+  margin:4px;
+  cursor:pointer;
+  border:none;
+  border-radius:10px;
+  background:#333;
+  color:white;
+}
+
+button:hover{
+  opacity:0.9;
 }
 
 input{
-  font-size: 1rem;
-  padding: 5px;
-  width: 80px;
+  font-size:1rem;
+  padding:6px;
+  width:90px;
 }
 
 .panel{
-  margin-bottom: 20px;
+  margin-bottom:20px;
 }
 
 .status{
-  font-weight: bold;
-  color: darkblue;
+  font-weight:bold;
+  color:darkblue;
 }
+
+.big{
+  font-size:2.2rem;
+  font-weight:bold;
+  margin-top:20px;
+  margin-bottom:20px;
+  padding:20px;
+  background:white;
+  border-radius:20px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.15);
+  word-break:break-word;
+}
+
+.previous{
+  color:#666;
+  font-size:1.2rem;
+}
+
+.countdown{
+  font-size:3rem;
+  text-align:center;
+  font-weight:bold;
+  margin:20px;
+  color:#cc0000;
+}
+
+@media (max-width:600px){
+
+  body{
+    font-size:1rem;
+  }
+
+  button{
+    width:100%;
+    max-width:320px;
+  }
+
+  .big{
+    font-size:1.8rem;
+  }
+}
+
 </style>
 </head>
 
 <body>
 
-<h2>数字トレーニング（PC版・音声あり）</h2>
+<h2>数字トレーニング（改良版・音声あり）</h2>
 
 <div class="panel">
   モード：
@@ -64,13 +120,18 @@ input{
 </div>
 
 <div class="panel">
-  読み上げ間隔（ms）：
+  読み上げ間隔(ms)：
   <input id="intervalInput" type="number" value="5000">
 </div>
 
 <div class="panel">
   読み上げ速度：
-  <input id="rateInput" type="number" value="1" step="0.1" min="0.5" max="2">
+  <input id="rateInput"
+         type="number"
+         value="1"
+         step="0.1"
+         min="0.5"
+         max="2">
 </div>
 
 <div class="panel">
@@ -86,19 +147,50 @@ input{
 
 <hr>
 
-<p>現在のモード：<span id="modeLabel">数字＋単位</span></p>
-<p>現在の桁数：<span id="digitsLabel">1</span>桁</p>
-<p>状態：<span id="status" class="status">停止中</span></p>
-<p>直近の出力：<span id="lastOutput">-</span></p>
-<p>残り時間：<span id="timeLeft">-</span></p>
+<p>
+現在モード：
+<span id="modeLabel">数字＋単位</span>
+</p>
+
+<p>
+現在桁数：
+<span id="digitsLabel">1</span>桁
+</p>
+
+<p>
+状態：
+<span id="status" class="status">停止中</span>
+</p>
+
+<p>
+残り時間：
+<span id="timeLeft">-</span>
+</p>
+
+<div id="countdown" class="countdown"></div>
+
+<p>現在：</p>
+
+<div id="lastOutput" class="big">
+-
+</div>
+
+<p>前回：</p>
+
+<div id="previousOutput" class="previous">
+-
+</div>
 
 <script>
 
 let running = false;
 let digits = 1;
 let mode = "number";
+
 let countdownTimer = null;
+
 let lastText = "";
+let previousText = "";
 
 // 名詞
 const nouns = [
@@ -148,81 +240,58 @@ function setDigits(d){
 
 // ランダム数字
 function getRandomNumber(){
-
-  let min = 0;
-
-  if(digits > 1){
-    min = Math.pow(10, digits - 1);
-  }
-
+  let min = digits > 1 ? Math.pow(10, digits - 1) : 0;
   const max = Math.pow(10, digits) - 1;
-
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// ランダム名詞
+// 名詞
 function getRandomNoun(){
   return nouns[Math.floor(Math.random() * nouns.length)];
 }
 
-// ランダム年月日
+// 年月日
 function getRandomYMD(){
-
   const year = Math.floor(Math.random() * 31) + 1995;
   const month = Math.floor(Math.random() * 12) + 1;
-
-  // 本物の日数取得（うるう年対応）
   const maxDay = new Date(year, month, 0).getDate();
-
   const day = Math.floor(Math.random() * maxDay) + 1;
-
   const d = new Date(year, month - 1, day);
-
   const weekday = weekdayNames[d.getDay()];
-
   return `${year}年、${month}月${day}日、${weekday}`;
 }
 
-// ランダム時刻
+// 時刻
 function getRandomTime(){
-
   const hour = Math.floor(Math.random() * 12) + 1;
-
   const minute = Math.floor(Math.random() * 60);
-
   const ampm = Math.random() < 0.5 ? "午前" : "午後";
-
   return `${ampm}、${hour}時、${minute}分`;
 }
 
 // ランダム混合
 function getRandomMixed(){
-
-  const modes = ["number", "date", "time"];
-
+  const modes = ["number","date","time"];
   const pick = modes[Math.floor(Math.random() * modes.length)];
-
-  if(pick === "number"){
-    return getRandomNumber() + getRandomNoun();
-  }
-
-  if(pick === "date"){
-    return getRandomYMD();
-  }
-
+  if(pick === "number") return getRandomNumber() + getRandomNoun();
+  if(pick === "date") return getRandomYMD();
   return getRandomTime();
 }
 
-// 読み上げ
-function speakAndWait(text, interval){
+// 問題生成
+function createQuestion(){
+  if(mode === "number") return getRandomNumber() + getRandomNoun();
+  if(mode === "date") return getRandomYMD();
+  if(mode === "time") return getRandomTime();
+  return getRandomMixed();
+}
 
+// 読み上げ
+function speakAndWait(text){
   return new Promise(resolve => {
 
     const u = new SpeechSynthesisUtterance(text);
-
     u.lang = "ja-JP";
-
-    // 読み上げ速度
     u.rate = Number(document.getElementById("rateInput").value) || 1;
 
     u.onstart = () => {
@@ -230,59 +299,71 @@ function speakAndWait(text, interval){
     };
 
     u.onend = () => {
+      if(!running) return;
 
       document.getElementById("status").textContent = "待機中";
+
+      const interval =
+        Number(document.getElementById("intervalInput").value) || 5000;
 
       setTimeout(resolve, interval);
     };
 
     speechSynthesis.speak(u);
+  });
+}
+
+// 次の問題
+async function next(){
+  if(!running) return;
+
+  previousText = lastText;
+
+  const output = createQuestion();
+  lastText = output;
+
+  document.getElementById("previousOutput").textContent = previousText || "-";
+  document.getElementById("lastOutput").textContent = output;
+
+  await speakAndWait(output);
+
+  if(running) next();
+}
+
+// 開始前カウントダウン
+function startCountdown(){
+  return new Promise(resolve => {
+
+    let count = 3;
+    const countdownDiv = document.getElementById("countdown");
+
+    countdownDiv.textContent = count;
+
+    const timer = setInterval(() => {
+
+      count--;
+
+      if(count > 0){
+        countdownDiv.textContent = count;
+      }
+      else if(count === 0){
+        countdownDiv.textContent = "開始";
+      }
+      else{
+        clearInterval(timer);
+        countdownDiv.textContent = "";
+        resolve();
+      }
+
+    },1000);
 
   });
 }
 
-// メインループ
-async function loop(){
-
-  const interval =
-    Number(document.getElementById("intervalInput").value) || 1200;
-
-  while(running){
-
-    if(!running) break;
-
-    let output = "";
-
-    if(mode === "number"){
-      output = getRandomNumber() + getRandomNoun();
-    }
-    else if(mode === "date"){
-      output = getRandomYMD();
-    }
-    else if(mode === "time"){
-      output = getRandomTime();
-    }
-    else{
-      output = getRandomMixed();
-    }
-
-    lastText = output;
-
-    document.getElementById("lastOutput").textContent = output;
-
-    await speakAndWait(output, interval);
-  }
-}
-
 // 開始
-function start(){
+async function start(){
 
   if(running) return;
-
-  // スマホ音声解除
-  const unlock = new SpeechSynthesisUtterance(" ");
-  unlock.lang = "ja-JP";
-  speechSynthesis.speak(unlock);
 
   running = true;
 
@@ -296,16 +377,17 @@ function start(){
   countdownTimer = setInterval(() => {
 
     timeLeft--;
-
     updateTimeDisplay(timeLeft);
 
     if(timeLeft <= 0){
       stop();
     }
 
-  }, 1000);
+  },1000);
 
-  loop();
+  await startCountdown();
+
+  next();
 }
 
 // 停止
@@ -315,43 +397,36 @@ function stop(){
 
   try{
     speechSynthesis.cancel();
-  }
-  catch(e){}
+  }catch(e){}
 
-  if(countdownTimer){
-    clearInterval(countdownTimer);
-  }
-
+  clearInterval(countdownTimer);
   countdownTimer = null;
 
   document.getElementById("status").textContent = "停止中";
-
   document.getElementById("timeLeft").textContent = "-";
+  document.getElementById("countdown").textContent = "";
+}
+
+// リピート（cancel を削除した安定版）
+function repeatLast(){
+
+  if(!lastText) return;
+
+  const u = new SpeechSynthesisUtterance(lastText);
+  u.lang = "ja-JP";
+  u.rate = Number(document.getElementById("rateInput").value) || 1;
+
+  speechSynthesis.speak(u);
 }
 
 // 残り時間表示
 function updateTimeDisplay(seconds){
 
   const min = Math.floor(seconds / 60);
-
   const sec = seconds % 60;
 
-  document.getElementById("timeLeft").textContent =
-    `${min}:${sec.toString().padStart(2, '0')}`;
-}
-
-// リピート
-function repeatLast(){
-
-  if(!lastText) return;
-
-  const u = new SpeechSynthesisUtterance(lastText);
-
-  u.lang = "ja-JP";
-
-  u.rate = Number(document.getElementById("rateInput").value) || 1;
-
-  speechSynthesis.speak(u);
+  document.getElementById("timeLeft")
+    .textContent = `${min}:${sec.toString().padStart(2,'0')}`;
 }
 
 </script>
