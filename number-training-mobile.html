@@ -2,108 +2,47 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>数字トレーニング(スマホ版)</title>
-
-<style>
-body {
-  font-family: sans-serif;
-  margin: 20px;
-  background: #f5f5f5;
-}
-h2 {
-  text-align: center;
-}
-.section {
-  margin-bottom: 20px;
-}
-button {
-  padding: 12px 18px;
-  margin: 4px;
-  font-size: 18px;
-  border-radius: 8px;
-  border: none;
-  background: #ddd;
-}
-button.active {
-  background: #4CAF50;
-  color: white;
-}
-.big-btn {
-  width: 100%;
-  padding: 18px;
-  font-size: 22px;
-  margin-top: 10px;
-  border-radius: 10px;
-}
-#startBtn { background: #4CAF50; color: white; }
-#stopBtn { background: #d9534f; color: white; }
-
-.output-box {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 0 8px rgba(0,0,0,0.1);
-}
-.output-label {
-  font-size: 18px;
-  color: #555;
-}
-.output-value {
-  font-size: 32px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
-.time-left {
-  font-size: 18px;
-  color: #333;
-}
-</style>
+<title>数字トレーニング（PC版）</title>
 </head>
-
 <body>
+<h3>数字トレーニング（PC版）</h3>
 
-<h2>数字トレーニング(Android版)</h2>
+<p>
+  モード：
+  <button onclick="setMode('number')">数字＋単位</button>
+  <button onclick="setMode('date')">年月日（曜日つき）</button>
+  <button onclick="setMode('time')">時刻（12時間制）</button>
+  <button onclick="setMode('random')">ランダム</button>
+</p>
 
-<!-- モード選択 -->
-<div class="section">
-  <strong>モード：</strong><br>
-  <button onclick="setMode('number')" id="m_number">数字＋単位</button>
-  <button onclick="setMode('date')" id="m_date">年月日（曜日）</button>
-  <button onclick="setMode('time')" id="m_time">時刻（12時間制）</button>
-  <button onclick="setMode('random')" id="m_random">ランダム</button>
-</div>
+<p id="digitArea">
+  桁数：
+  <button onclick="setDigits(1)">1桁</button>
+  <button onclick="setDigits(2)">2桁</button>
+  <button onclick="setDigits(3)">3桁</button>
+  <button onclick="setDigits(4)">4桁</button>
+  <button onclick="setDigits(5)">5桁</button>
+  <button onclick="setDigits(6)">6桁</button>
+  <button onclick="setDigits(7)">7桁</button>
+  <button onclick="setDigits(8)">8桁</button>
+  <button onclick="setDigits(9)">9桁</button>
+</p>
 
-<!-- 桁数 -->
-<div class="section" id="digitArea">
-  <strong>桁数：</strong><br>
-  <div id="digitButtons"></div>
-</div>
+<p>
+  読み上げ間隔（ミリ秒）：<input id="intervalInput" type="number" value="1200">
+</p>
 
-<!-- 読み上げ間隔 -->
-<div class="section">
-  <strong>読み上げ間隔（秒）：</strong><br>
-  <input type="range" id="intervalSlider" min="0.5" max="3" step="0.1" value="1.2">
-  <span id="intervalLabel">1.2秒</span>
-</div>
+<p>
+  タイマー（分）：<input id="timerMinutes" type="number" value="5">
+</p>
 
-<!-- タイマー -->
-<div class="section">
-  <strong>タイマー（分）：</strong><br>
-  <input type="range" id="timerSlider" min="1" max="15" step="1" value="5">
-  <span id="timerLabel">5分</span>
-</div>
+<button onclick="start()">開始</button>
+<button onclick="stop()">停止</button>
 
-<!-- 出力表示 -->
-<div class="output-box">
-  <div class="output-label">直近の出力</div>
-  <div id="lastOutput" class="output-value">-</div>
-  <div class="time-left">残り時間：<span id="timeLeft">-</span></div>
-</div>
-
-<button id="startBtn" class="big-btn" onclick="start()">開始</button>
-<button id="stopBtn" class="big-btn" onclick="stop()">停止</button>
+<p>現在のモード：<span id="modeLabel">数字＋名詞</span></p>
+<p>現在の桁数：<span id="digitsLabel">1</span>桁</p>
+<p>直近の出力：<span id="lastOutput">-</span></p>
+<p>残り時間：<span id="timeLeft">-</span></p>
 
 <script>
 let running = false;
@@ -111,7 +50,7 @@ let digits = 1;
 let mode = "number";
 let countdownTimer = null;
 
-// 名詞リスト（PC版と同じ）
+// 名詞リスト
 const nouns = [
   "歳","円","時間","％","年",
   "ミリメートル","センチメートル","メートル","キロメートル",
@@ -122,38 +61,32 @@ const nouns = [
   "リットル"
 ];
 
+// 曜日リスト
 const weekdayNames = ["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"];
 
-// モード切替
 function setMode(m) {
   mode = m;
 
-  document.getElementById("digitArea").style.display =
-    m === "number" ? "block" : "none";
-
-  ["m_number","m_date","m_time","m_random"].forEach(id =>
-    document.getElementById(id).classList.remove("active")
-  );
-  document.getElementById("m_" + m).classList.add("active");
+  if (m === "number") {
+    document.getElementById("modeLabel").textContent = "数字＋名詞";
+    document.getElementById("digitArea").style.display = "block";
+  } else if (m === "date") {
+    document.getElementById("modeLabel").textContent = "年月日（曜日つき）";
+    document.getElementById("digitArea").style.display = "none";
+  } else if (m === "time") {
+    document.getElementById("modeLabel").textContent = "時刻（12時間制）";
+    document.getElementById("digitArea").style.display = "none";
+  } else {
+    document.getElementById("modeLabel").textContent = "ランダム";
+    document.getElementById("digitArea").style.display = "none";
+  }
 }
 
-// 桁数ボタン生成
-const digitButtons = document.getElementById("digitButtons");
-for (let i = 1; i <= 9; i++) {
-  const btn = document.createElement("button");
-  btn.textContent = i + "桁";
-  btn.onclick = () => setDigits(i, btn);
-  if (i === 1) btn.classList.add("active");
-  digitButtons.appendChild(btn);
-}
-
-function setDigits(d, btn) {
+function setDigits(d) {
   digits = d;
-  [...digitButtons.children].forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
+  document.getElementById('digitsLabel').textContent = d;
 }
 
-// 数字生成
 function getRandomNumber() {
   const min = Math.pow(10, digits - 1);
   const max = Math.pow(10, digits) - 1;
@@ -164,7 +97,6 @@ function getRandomNoun() {
   return nouns[Math.floor(Math.random() * nouns.length)];
 }
 
-// 年月日（曜日つき）
 function getRandomYMD() {
   const year = Math.floor(Math.random() * 31) + 1995;
   const month = Math.floor(Math.random() * 12) + 1;
@@ -181,7 +113,6 @@ function getRandomYMD() {
   return `${year}年${month}月${day}日（${weekday}）`;
 }
 
-// 時刻（12時間制）
 function getRandomTime() {
   const hour = Math.floor(Math.random() * 12) + 1;
   const minute = Math.floor(Math.random() * 60);
@@ -189,7 +120,6 @@ function getRandomTime() {
   return `${ampm}${hour}時${minute}分`;
 }
 
-// ランダム
 function getRandomMixed() {
   const modes = ["number", "date", "time"];
   const pick = modes[Math.floor(Math.random() * modes.length)];
@@ -199,11 +129,10 @@ function getRandomMixed() {
   return getRandomTime();
 }
 
-// 読み上げ完了後に次へ
 function speakAndWait(text, interval) {
   return new Promise(resolve => {
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "ja-JP";
+    u.lang = 'ja-JP';
 
     u.onend = () => {
       setTimeout(resolve, interval);
@@ -213,9 +142,8 @@ function speakAndWait(text, interval) {
   });
 }
 
-// 完全同期ループ
 async function loop() {
-  const interval = Number(document.getElementById("intervalSlider").value) * 1000;
+  const interval = Number(document.getElementById('intervalInput').value) || 1200;
 
   while (running) {
     let output = "";
@@ -225,22 +153,27 @@ async function loop() {
     else if (mode === "time") output = getRandomTime();
     else output = getRandomMixed();
 
-    document.getElementById("lastOutput").textContent = output;
+    document.getElementById('lastOutput').textContent = output;
 
     await speakAndWait(output, interval);
   }
 }
 
 function start() {
-  stop();
+  // ★ スマホ用：開始ボタン直後に空読み上げ（これが超重要）
+  const unlock = new SpeechSynthesisUtterance(" ");
+  unlock.lang = "ja-JP";
+  speechSynthesis.speak(unlock);
+
+  stop(); // ← 空読み上げの後に stop() を呼ぶのがポイント
   running = true;
 
-  let timeLeft = Number(document.getElementById("timerSlider").value) * 60;
-  document.getElementById("timeLeft").textContent = timeLeft + "秒";
+  let timeLeft = Number(document.getElementById('timerMinutes').value) * 60;
+  document.getElementById('timeLeft').textContent = timeLeft + "秒";
 
   countdownTimer = setInterval(() => {
     timeLeft--;
-    document.getElementById("timeLeft").textContent = timeLeft + "秒";
+    document.getElementById('timeLeft').textContent = timeLeft + "秒";
     if (timeLeft <= 0) stop();
   }, 1000);
 
@@ -254,16 +187,8 @@ function stop() {
   if (countdownTimer) clearInterval(countdownTimer);
   countdownTimer = null;
 
-  document.getElementById("timeLeft").textContent = "-";
+  document.getElementById('timeLeft').textContent = "-";
 }
-
-// スライダー表示更新
-document.getElementById("intervalSlider").oninput = function() {
-  document.getElementById("intervalLabel").textContent = this.value + "秒";
-};
-document.getElementById("timerSlider").oninput = function() {
-  document.getElementById("timerLabel").textContent = this.value + "分";
-};
 </script>
 
 </body>
